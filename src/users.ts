@@ -4,7 +4,7 @@ type User = {
     walletAddress: string;
     username: string;
     email: string;
-    cid: string | null;
+    cid: string[] | null;
     createdAt: Date;
 };
 

@@ -19,13 +19,13 @@ router.post('/update-transaction', async (req: any, res: any) => {
     if (!wallet_address || !cid) {
         return res
             .status(400)
-            .json({ error: 'wallet address and cid is required' });
+            .json({ error: 'wallet address or cid is required' });
     }
     try {
-        await db.query('UPDATE users SET cid = $1 WHERE wallet_address = $2', [
-            cid,
-            wallet_address,
-        ]);
+        await db.query(
+            'UPDATE users SET cid = array_append(cid, $1) WHERE wallet_address = $2',
+            [cid, wallet_address]
+        );
         return res.status(200).json({ message: 'CID updated successfully' });
     } catch (err) {
         return res.status(500).json({ error: 'Internal server error' });
