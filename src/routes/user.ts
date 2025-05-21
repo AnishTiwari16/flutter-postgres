@@ -16,13 +16,16 @@ router.post('/onboard', (req: any, res: any) => {
     const user = findOrCreateUser(walletAddress, username, email);
     return res.status(200).json(user);
 });
-router.post('/update-transaction', async (req: any, res: any) => {
-    //after onchain commit is completed add the cid in the db
-    const { wallet_address, cid, trx_hash } = req.body;
+const performDBOperation = async (
+    wallet_address: string,
+    cid: string,
+    trx_hash: string
+) => {
     if (!wallet_address || !cid || !trx_hash) {
-        return res
-            .status(400)
-            .json({ error: 'wallet address cid or trx_hash is required' });
+        return {
+            success: false,
+            message: 'wallet address, cid or trx_hash is required',
+        };
     }
     try {
         const query = `
@@ -47,13 +50,14 @@ router.post('/update-transaction', async (req: any, res: any) => {
             )
         `;
         await db.query(query, [wallet_address, cid, trx_hash]);
-        return res
-            .status(200)
-            .json({ message: 'Transaction log updated successfully' });
+        return {
+            success: true,
+            message: 'Transaction log updated successfully',
+        };
     } catch (err) {
-        return res.status(500).json({ error: 'Internal server error' });
+        return { success: false, message: 'Internal server error' };
     }
-});
+};
 router.post('/meta-tx', async (req: any, res: any) => {
     const { wallet_address, pkey, cid } = req.body;
     if (!wallet_address || !pkey || !cid) {
@@ -90,12 +94,33 @@ router.post('/meta-tx', async (req: any, res: any) => {
             signature
         );
         await tx.wait();
-
-        return res.status(200).json({
-            txHash: tx.hash,
-        });
+        const trxHash = tx.hash;
+        if (trxHash) {
+            const result = await performDBOperation(
+                wallet_address,
+                cid,
+                trxHash
+            );
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.message,
+                    transactionHash: trxHash,
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.message,
+                });
+            }
+        }
+        return res
+            .status(500)
+            .json({ success: false, error: 'Transaction failed' });
     } catch (err) {
-        return res.status(500).json({ error: 'Internal server error' });
+        return res
+            .status(500)
+            .json({ success: false, error: 'Internal server error' });
     }
 });
 export default router;
