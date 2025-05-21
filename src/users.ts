@@ -4,7 +4,6 @@ type User = {
     walletAddress: string;
     username: string;
     email: string;
-    cid: string[] | null;
     createdAt: Date;
 };
 
@@ -14,7 +13,7 @@ export const findOrCreateUser = async (
     email: string
 ): Promise<User> => {
     const existing = await db.query(
-        'SELECT wallet_address, username, email, cid, created_at FROM users WHERE wallet_address = $1',
+        'SELECT wallet_address, username, email, created_at FROM users WHERE wallet_address = $1',
         [walletAddress]
     );
 
@@ -23,7 +22,7 @@ export const findOrCreateUser = async (
     }
 
     const insert = await db.query(
-        'INSERT INTO users (wallet_address, username, email) VALUES ($1, $2, $3) RETURNING wallet_address, username, email, cid, created_at',
+        'INSERT INTO users (wallet_address, username, email) VALUES ($1, $2, $3) RETURNING wallet_address, username, email, created_at',
         [walletAddress, username, email]
     );
 
