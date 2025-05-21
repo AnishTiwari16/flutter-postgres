@@ -29,14 +29,14 @@ router.post('/update-transaction', async (req: any, res: any) => {
             UPDATE user_logs
             SET
                 cid_logs = cid_logs || jsonb_build_array(
-                jsonb_build_object(
-                    'cid', $2,
-                    'tx_hash', $3,
-                    'timestamp', NOW()
-                )
+                    jsonb_build_object(
+                        'cid', $2::text,
+                        'tx_hash', $3::text,
+                        'timestamp', NOW()
+                    )
                 )
             WHERE wallet_address = $1
-            `;
+        `;
         await db.query(query, [wallet_address, cid, trx_hash]);
         return res
             .status(200)
