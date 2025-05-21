@@ -26,16 +26,25 @@ router.post('/update-transaction', async (req: any, res: any) => {
     }
     try {
         const query = `
-            UPDATE user_logs
-            SET
-                cid_logs = cid_logs || jsonb_build_array(
+            INSERT INTO user_logs (wallet_address, cid_logs)
+            VALUES (
+                $1,
+                jsonb_build_array(
                     jsonb_build_object(
                         'cid', $2::text,
                         'tx_hash', $3::text,
                         'timestamp', NOW()
                     )
                 )
-            WHERE wallet_address = $1
+            )
+            ON CONFLICT (wallet_address)
+            DO UPDATE SET cid_logs = user_logs.cid_logs || jsonb_build_array(
+                jsonb_build_object(
+                    'cid', $2::text,
+                    'tx_hash', $3::text,
+                    'timestamp', NOW()
+                )
+            )
         `;
         await db.query(query, [wallet_address, cid, trx_hash]);
         return res
