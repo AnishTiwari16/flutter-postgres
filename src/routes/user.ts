@@ -95,28 +95,19 @@ router.post('/meta-tx', async (req: any, res: any) => {
         );
         await tx.wait();
         const trxHash = tx.hash;
-        if (trxHash) {
-            const result = await performDBOperation(
-                wallet_address,
-                cid,
-                trxHash
-            );
-            if (result.success) {
-                return res.status(200).json({
-                    success: true,
-                    message: result.message,
-                    transactionHash: trxHash,
-                });
-            } else {
-                return res.status(500).json({
-                    success: false,
-                    error: result.message,
-                });
-            }
+        const result = await performDBOperation(wallet_address, cid, trxHash);
+        if (result.success) {
+            return res.status(200).json({
+                success: true,
+                message: result.message,
+                transactionHash: trxHash,
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                error: result.message,
+            });
         }
-        return res
-            .status(500)
-            .json({ success: false, error: 'Transaction failed' });
     } catch (err) {
         return res
             .status(500)
