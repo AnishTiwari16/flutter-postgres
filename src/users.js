@@ -1,17 +1,6 @@
-import db from './db';
+import db from './db/index.js';
 
-type User = {
-    walletAddress: string;
-    username: string;
-    email: string;
-    createdAt: Date;
-};
-
-export const findOrCreateUser = async (
-    walletAddress: string,
-    username: string,
-    email: string
-): Promise<User> => {
+export const findOrCreateUser = async (walletAddress, username, email) => {
     const existing = await db.query(
         'SELECT wallet_address, username, email, created_at FROM users WHERE wallet_address = $1',
         [walletAddress]

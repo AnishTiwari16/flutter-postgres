@@ -1,12 +1,14 @@
-import express from 'express';
-import { findOrCreateUser } from '../users';
-import db from '../db';
 import { ethers } from 'ethers';
-import { FACTORY_ABI } from '../abi/FACTORY_ABI';
+import express from 'express';
+import { FACTORY_ABI } from '../abi/FACTORY_ABI.js';
+import db from '../db/index.js';
+import { findOrCreateUser } from '../users.js';
+
+import authenticateWeb3Auth from '../middleware/index.js';
 
 const router = express.Router();
 
-router.post('/onboard', (req: any, res: any) => {
+router.post('/onboard', authenticateWeb3Auth, (req, res) => {
     const { walletAddress, username, email } = req.body;
 
     if (!walletAddress || !username || !email) {
@@ -16,11 +18,7 @@ router.post('/onboard', (req: any, res: any) => {
     const user = findOrCreateUser(walletAddress, username, email);
     return res.status(200).json(user);
 });
-const performDBOperation = async (
-    wallet_address: string,
-    cid: string,
-    trx_hash: string
-) => {
+const performDBOperation = async (wallet_address, cid, trx_hash) => {
     if (!wallet_address || !cid || !trx_hash) {
         return {
             success: false,
@@ -58,7 +56,7 @@ const performDBOperation = async (
         return { success: false, message: 'Internal server error' };
     }
 };
-router.post('/meta-tx', async (req: any, res: any) => {
+router.post('/meta-tx', authenticateWeb3Auth, async (req, res) => {
     const { wallet_address, pkey, cid } = req.body;
     if (!wallet_address || !pkey || !cid) {
         return res
@@ -79,10 +77,7 @@ router.post('/meta-tx', async (req: any, res: any) => {
         const provider = new ethers.providers.JsonRpcProvider(
             'https://api.avax-test.network/ext/bc/C/rpc'
         );
-        const adminSigner = new ethers.Wallet(
-            process.env.ADMIN_KEY as string,
-            provider
-        );
+        const adminSigner = new ethers.Wallet(process.env.ADMIN_KEY, provider);
         const factoryContract = new ethers.Contract(
             '0x201E02F99A3898A174f15E6ACA670EB314658eba',
             FACTORY_ABI,
@@ -114,4 +109,5 @@ router.post('/meta-tx', async (req: any, res: any) => {
             .json({ success: false, error: 'Internal server error' });
     }
 });
+
 export default router;
